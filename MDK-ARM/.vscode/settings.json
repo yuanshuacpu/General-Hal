@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "mytype.h": "c",
+        "main.h": "c",
+        "file_reference.h": "c",
+        "NUC.H": "cpp"
+    }
+}
