@@ -48,6 +48,8 @@ struct PID_TypeDef PID_Storage_Speed;
 // ÔÆÌ¨PID
 struct PID_TypeDef PID_Gimbal_Angle[2];
 struct PID_TypeDef PID_Gimbal_Speed[2];
+struct PID_TypeDef PID_Gimbal_Angle_Stop[2];
+struct PID_TypeDef PID_Gimbal_Speed_Stop[2];
 
 struct PID_TypeDef PID_Gimbal_Angle_Auto[2];
 struct PID_TypeDef PID_Gimbal_Speed_Auto[2];

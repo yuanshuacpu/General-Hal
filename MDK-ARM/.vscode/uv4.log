@@ -1,4 +1,8 @@
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'H:\stm32code\ARM\ARMCC\Bin'
 Build target 'HAL_Tranmit'
+compiling chassis_task.c...
+linking...
+Program Size: Code=50136 RO-data=2340 RW-data=736 ZI-data=26488  
+FromELF: creating hex file...
 "HAL_Tranmit\HAL_Tranmit.axf" - 0 Error(s), 0 Warning(s).
-Build Time Elapsed:  00:00:02
+Build Time Elapsed:  00:00:04

@@ -368,6 +368,14 @@ void Chassis_Follow_Control()
 	Chassis_Speed.vx *= Init_Dir;
 	Chassis_Speed.vy *= Init_Dir;
 
+	if (DBUS.PC.Keyboard & KEY_Q) // 左旋
+	{
+		Chassis_Speed.vw = -Pid_Calc(&PID_Chassis_Omega, (CAN_Gimbal[0].Current_MechAngle - Gimbal_Init_Processing_Data.Init_Angle) / 8192.0 * 360.0f, 20); // 云台Yaw轴相对角PID 输出旋转速度分量
+	}
+	else if (DBUS.PC.Keyboard & KEY_E) // 右旋
+	{
+		Chassis_Speed.vw = -Pid_Calc(&PID_Chassis_Omega, (CAN_Gimbal[0].Current_MechAngle - Gimbal_Init_Processing_Data.Init_Angle) / 8192.0 * 360.0f, -20); // 云台Yaw轴相对角PID 输出旋转速度分量
+	}
 	// 旋转速度死区，减少静止底盘轮系抖动
 	if (fabs(Chassis_Speed.vw) < 200)
 		Chassis_Speed.vw = 0;

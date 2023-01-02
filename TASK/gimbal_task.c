@@ -2,7 +2,6 @@
 // 1000/6hz
 void gimbal_task(void *p_arg);
 
-
 void Gimbal_Stop_Control(void);
 void Gimbal_Follow_Control(void);
 void Gimbal_AutoAim_Control(void);
@@ -85,38 +84,100 @@ void Gimbal_Mode_Choose(void)
 		Gimbal_Mode = GIMBAL_MODE_STOP;
 	}
 }
+// // 云台手瞄控制
+// /*
+//  *@Description：云台跟随控制
+//  *@param 1：	  参数1
+//  *@param 2：	  参数2
+//  *@return:：	  返回值
+//  */
+// void Gimbal_Follow_Control()
+// {
+// 	Gimbal_Init_Processing_Data.Pitch_Aim_Angle -= DBUS.RC.ch3 / 80.0f;
+
+// 	if (Gimbal_Init_Processing_Data.Pitch_Aim_Angle > Gimbal_Init_Processing_Data.Pitch_Angle_Max)
+// 	{
+// 		Gimbal_Init_Processing_Data.Pitch_Aim_Angle = Gimbal_Init_Processing_Data.Pitch_Angle_Max;
+// 	}
+// 	else if (Gimbal_Init_Processing_Data.Pitch_Aim_Angle < Gimbal_Init_Processing_Data.Pitch_Angle_Min)
+// 	{
+// 		Gimbal_Init_Processing_Data.Pitch_Aim_Angle = Gimbal_Init_Processing_Data.Pitch_Angle_Min;
+// 	}
+
+// 	PID_Gimbal_Angle[1].PIDout = Pid_Calc(&PID_Gimbal_Angle[1], CAN_Gimbal[1].Current_MechAngle, Gimbal_Init_Processing_Data.Pitch_Aim_Angle);
+// 	CAN_Gimbal[1].Target_Current = Pid_Calc(&PID_Gimbal_Speed[1], mpu_data.origin_data.gy * 0.1f, PID_Gimbal_Angle[1].PIDout);
+
+// 	Gimbal_Init_Processing_Data.Yaw_Aim_Angle -= DBUS.RC.ch2 / 80.0f;
+
+// 	//		if(Yaw_Aim_Angle > Yaw_Angle_Max)
+// 	//		{Yaw_Aim_Angle = Yaw_Angle_Max;}
+// 	//		else if(Yaw_Aim_Angle < Yaw_Angle_Min)
+// 	//		{Yaw_Aim_Angle = Yaw_Angle_Min;}
+
+// 	PID_Gimbal_Angle[0].PIDout = Pid_Calc(&PID_Gimbal_Angle[0], Yaw_Angle / 360 * 8192, Gimbal_Init_Processing_Data.Yaw_Aim_Angle);
+// 	CAN_Gimbal[0].Target_Current = Pid_Calc(&PID_Gimbal_Speed[0], mpu_data.origin_data.gz * 0.1f, PID_Gimbal_Angle[0].PIDout);
+// }
+
 // 云台手瞄控制
 /*
- *@Description：云台跟随控制
+ *@Description：云台跟随控制(待优化急停)
  *@param 1：	  参数1
  *@param 2：	  参数2
  *@return:：	  返回值
  */
+int Pitch_Flag = 0;
+int Yaw_Flag = 0;
+
 void Gimbal_Follow_Control()
 {
-	Gimbal_Init_Processing_Data.Pitch_Aim_Angle -= DBUS.RC.ch3 / 80.0f;
+	float Last_Pitch_Angle = 0;
 
-	if (Gimbal_Init_Processing_Data.Pitch_Aim_Angle > Gimbal_Init_Processing_Data.Pitch_Angle_Max)
+	if (DBUS.PC.Keyboard & KEY_X) // Pitch急停
 	{
-		Gimbal_Init_Processing_Data.Pitch_Aim_Angle = Gimbal_Init_Processing_Data.Pitch_Angle_Max;
+		if (Pitch_Flag == 0)
+		{
+			Gimbal_Init_Processing_Data.Pitch_Aim_Angle = CAN_Gimbal[1].Current_MechAngle;
+			Pitch_Flag = 1;
+		}
+		Gimbal_Init_Processing_Data.Pitch_Aim_Angle = Gimbal_Init_Processing_Data.Pitch_Aim_Angle;
+		PID_Gimbal_Angle[1].PIDout = Pid_Calc(&PID_Gimbal_Angle_Stop[1], CAN_Gimbal[1].Current_MechAngle, Gimbal_Init_Processing_Data.Pitch_Aim_Angle);
+		CAN_Gimbal[1].Target_Current = Pid_Calc(&PID_Gimbal_Speed_Stop[1], mpu_data.origin_data.gy * 0.1f, PID_Gimbal_Angle[1].PIDout);
 	}
-	else if (Gimbal_Init_Processing_Data.Pitch_Aim_Angle < Gimbal_Init_Processing_Data.Pitch_Angle_Min)
+
+	else
 	{
-		Gimbal_Init_Processing_Data.Pitch_Aim_Angle = Gimbal_Init_Processing_Data.Pitch_Angle_Min;
+		Gimbal_Init_Processing_Data.Pitch_Aim_Angle += -DBUS.RC.ch3 / 100.0f + DBUS.PC.Y / 10.0f;
+		if (Gimbal_Init_Processing_Data.Pitch_Aim_Angle > Gimbal_Init_Processing_Data.Pitch_Angle_Max)
+		{
+			Gimbal_Init_Processing_Data.Pitch_Aim_Angle = Gimbal_Init_Processing_Data.Pitch_Angle_Max;
+		}
+		else if (Gimbal_Init_Processing_Data.Pitch_Aim_Angle < Gimbal_Init_Processing_Data.Pitch_Angle_Min)
+		{
+			Gimbal_Init_Processing_Data.Pitch_Aim_Angle = Gimbal_Init_Processing_Data.Pitch_Angle_Min;
+		}
+		Pitch_Flag = 0;
+
+		PID_Gimbal_Angle[1].PIDout = Pid_Calc(&PID_Gimbal_Angle[1], CAN_Gimbal[1].Current_MechAngle, Gimbal_Init_Processing_Data.Pitch_Aim_Angle);
+		CAN_Gimbal[1].Target_Current = Pid_Calc(&PID_Gimbal_Speed[1], mpu_data.origin_data.gy * 0.1f, PID_Gimbal_Angle[1].PIDout);
 	}
 
-	PID_Gimbal_Angle[1].PIDout = Pid_Calc(&PID_Gimbal_Angle[1], CAN_Gimbal[1].Current_MechAngle, Gimbal_Init_Processing_Data.Pitch_Aim_Angle);
-	CAN_Gimbal[1].Target_Current = Pid_Calc(&PID_Gimbal_Speed[1], mpu_data.origin_data.gy * 0.1f, PID_Gimbal_Angle[1].PIDout);
-
-	Gimbal_Init_Processing_Data.Yaw_Aim_Angle -= DBUS.RC.ch2 / 80.0f;
-
-	//		if(Yaw_Aim_Angle > Yaw_Angle_Max)
-	//		{Yaw_Aim_Angle = Yaw_Angle_Max;}
-	//		else if(Yaw_Aim_Angle < Yaw_Angle_Min)
-	//		{Yaw_Aim_Angle = Yaw_Angle_Min;}
-
-	PID_Gimbal_Angle[0].PIDout = Pid_Calc(&PID_Gimbal_Angle[0], Yaw_Angle / 360 * 8192, Gimbal_Init_Processing_Data.Yaw_Aim_Angle);
-	CAN_Gimbal[0].Target_Current = Pid_Calc(&PID_Gimbal_Speed[0], mpu_data.origin_data.gz * 0.1f, PID_Gimbal_Angle[0].PIDout);
+	if (DBUS.PC.Keyboard & KEY_X) // Yaw急停
+	{
+		if (Yaw_Flag == 0)
+		{
+			Gimbal_Init_Processing_Data.Yaw_Aim_Angle = Yaw_Angle;
+			Yaw_Flag = 1;
+		}
+		PID_Gimbal_Angle[0].PIDout = Pid_Calc(&PID_Gimbal_Angle_Stop[0], Yaw_Angle, Gimbal_Init_Processing_Data.Yaw_Aim_Angle);
+		CAN_Gimbal[0].Target_Current = -Pid_Calc(&PID_Gimbal_Speed_Stop[0], mpu_data.origin_data.gz * 0.1f, PID_Gimbal_Angle[0].PIDout);
+	}
+	else
+	{
+		Gimbal_Init_Processing_Data.Yaw_Aim_Angle -= DBUS.RC.ch2 / 600.0f + DBUS.PC.X / 100.0f;
+		PID_Gimbal_Angle[0].PIDout = Pid_Calc(&PID_Gimbal_Angle[0], Yaw_Angle, Gimbal_Init_Processing_Data.Yaw_Aim_Angle);
+		CAN_Gimbal[0].Target_Current = -Pid_Calc(&PID_Gimbal_Speed[0], mpu_data.origin_data.gz * 0.1f, PID_Gimbal_Angle[0].PIDout);
+		Yaw_Flag = 0;
+	}
 }
 
 // 云台摇摆速度
@@ -182,7 +243,7 @@ void Gimbal_AutoAim_Control()
 	{
 		Gimbal_Init_Processing_Data.Pitch_Aim_Angle = Gimbal_Init_Processing_Data.Pitch_Angle_Max;
 	}
-	else if (Gimbal_Init_Processing_Data.Pitch_Aim_Angle <Gimbal_Init_Processing_Data.Pitch_Angle_Min)
+	else if (Gimbal_Init_Processing_Data.Pitch_Aim_Angle < Gimbal_Init_Processing_Data.Pitch_Angle_Min)
 	{
 		Gimbal_Init_Processing_Data.Pitch_Aim_Angle = Gimbal_Init_Processing_Data.Pitch_Angle_Min;
 	}
