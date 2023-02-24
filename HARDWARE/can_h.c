@@ -102,6 +102,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 			case 0x209:
 			{
 				CAN_Data_Decode(&CAN_Gimbal[1], CAN1_Rx_Data);
+				break;
 			}
 
 			// SuperCap(ŒÌ¡–µÁ»›)

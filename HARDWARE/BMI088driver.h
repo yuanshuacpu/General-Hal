@@ -82,6 +82,4 @@ extern void BMI088_read(fp32 gyro[3], fp32 accel[3], fp32 *temperate);
 
 void BMI088_Get_Data(void);
 
-
-
 #endif
